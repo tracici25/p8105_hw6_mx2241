@@ -317,6 +317,24 @@ log_plot
 ### 95% Confidence Interval
 
 ```{r}
+ci_df = 
+  log_df %>% 
+  summarise(
+    rsq_lower = quantile(r.squared, 0.025),
+    rsq_upper = quantile(r.squared, 0.975),
+    log_lower = quantile(log, 0.025),
+    log_upper = quantile(log, 0.975)
+  ) %>% 
+  pivot_longer(rsq_lower:log_upper,
+               names_to = "CI",
+               values_to = "Boundary") %>% 
+  separate(CI, into = c("Subject", "CI"), sep = "_") %>% 
+  pivot_wider(
+    names_from = "CI", 
+    values_from = "Boundary") %>% 
+  knitr::kable(digits = 4)
+
+ci_df
 
 ```
 
