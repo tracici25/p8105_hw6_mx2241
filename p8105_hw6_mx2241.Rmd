@@ -240,6 +240,92 @@ cv_df %>%
 ```
 
 
+# Problem 3
+
+### Load the data
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+### Bootstrapping
+
+```{r}
+bootstrap_results = 
+  weather_df %>% 
+  bootstrap(5000, id = "strap_number") %>% 
+  mutate(
+    models = map(strap, ~lm(tmax ~ tmin, data = .x)),
+    result_tidy = map(models, broom::tidy),
+    result_glance = map(models, broom::glance)) %>% 
+  select(strap_number, result_tidy, result_glance) %>% 
+  unnest(result_tidy, result_glance) %>% 
+  select(strap_number, term, estimate, r.squared)
+```
+
+### R^2 distribution plot
+
+```{r}
+rsqu_plot = 
+  bootstrap_results %>% 
+  ggplot(aes(x = r.squared)) +
+  geom_density(fill = "orange", alpha = 0.6) +
+  labs(
+    title = "Distribution plot of estimated R^2",
+    x = "Estimated R^2"
+  )
+
+rsqu_plot
+```
+
+### Log(beta0 * beta1) distribution plot
+
+```{r}
+log_df = 
+  bootstrap_results %>% 
+  pivot_wider(
+    names_from = "term",
+    values_from = "estimate"
+  ) %>% 
+  rename(beta_0 = "(Intercept)",
+         beta_1 = "tmin") %>% 
+  mutate(
+    log = log(beta_0 * beta_1)
+  )
+
+log_plot = 
+  log_df %>% 
+  ggplot(aes(x = log)) +
+  geom_density(fill = "pink", alpha = 0.6) +
+  labs(
+    title = "Distribution plot of log(beta0 * beta1)",
+    x = "log(beta0 * beta1)"
+  )
+
+log_plot
+```
+
+### 95% Confidence Interval
+
+```{r}
+
+```
+
+
+
+
+
+
+
 
 
 
