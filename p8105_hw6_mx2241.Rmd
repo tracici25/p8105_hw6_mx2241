@@ -101,28 +101,60 @@ models_results_df %>%
 ```
 
 
+# Problem 2
 
-## Problem 2
-
-Find some residuals
+### Load and clean data for regression analysis
 
 ```{r}
 baby_df = 
-  read_csv("./data/birthweight.csv")
+  read_csv("./data/birthweight.csv") %>% 
+  mutate(
+    babysex = case_when(
+      babysex == 1 ~ "Male",
+      babysex == 2 ~ "Female"
+    ),
+    frace = case_when(
+      frace == 1 ~ "White",
+      frace == 2 ~ "Black",
+      frace == 3 ~ "Asian",
+      frace == 4 ~ "Puerto Rican",
+      frace == 8 ~ "Other",
+      frace == 9 ~ "Unknown"
+    ),
+    mrace = case_when(
+      mrace == 1 ~ "White",
+      mrace == 2 ~ "Black",
+      mrace == 3 ~ "Asian",
+      mrace == 4 ~ "Puerto Rican",
+      mrace == 8 ~ "Other"
+    ),
+    malform = case_when(
+      malform == 0 ~ "absent",
+      malform == 1 ~ "present"
+    ),
+    babysex = as.factor(babysex),
+    frace = as.factor(frace),
+    mrace = as.factor(mrace),
+    malform = as.factor(malform)
+  ) %>% 
+  drop_na()
 ```
 
-fit a model
+### Select a model
 
 ```{r}
-model_fit = lm(bwt ~ gaweeks, data = baby_df)
+# Stepwise Elimination
+model = 
+  lm(bwt ~ ., data = baby_df) %>% 
+  step(., direction = "both") %>% 
+  broom::tidy()
 ```
 
-```{r}
+
 baby_df %>% 
   modelr::add_residuals(model_fit) %>% 
   ggplot(aes(x = gaweeks, y = resid)) + 
   geom_point()
-```
 
 
 
